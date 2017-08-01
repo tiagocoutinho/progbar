@@ -205,4 +205,6 @@ def demo2():
 
 if __name__ == "__main__":
     with NoEcho():
+        demo0()
         demo1()
+        demo2()

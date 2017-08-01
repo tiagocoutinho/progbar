@@ -136,10 +136,10 @@ def move(*args, **kwargs):
     pbars = [MotionBar(m, p, position=i)
              for i, (m, p) in enumerate(axis_positions)]
 
-    with motionmanager(*pbars) as motion_manager:
-        for axis, position in axis_positions:
-            axis.start_move(position)
-        try:
+    try:
+        with motionmanager(*pbars) as motion_manager:
+            for axis, position, _ in axis_positions_labels:
+                axis.start_move(position)
             motion = True
             while motion:
                 motion = False
@@ -148,10 +148,10 @@ def move(*args, **kwargs):
                     if axis.state == axis.MOVING:
                         motion = True
                 time.sleep(0.05)
-        finally:
-            nb_lines = len(axes) - 1
-            if nb_lines > 0:
-                fobj.write(nb_lines*'\n')
+    finally:
+        nb_lines = len(axes) - 1
+        if nb_lines > 0:
+            fobj.write(nb_lines*'\n')
 
     if motion_manager[-1].ctrlc_hit:
         print 'Motion aborted!'

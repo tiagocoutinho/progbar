@@ -36,9 +36,10 @@ class NoEcho(object):
 
 class HandleCtrlC(object):
 
-    def __init__(self, handler):
+    def __init__(self, handler, consume=False):
         self.__handler = handler
         self.ctrlc_hit = False
+        self.consume = consume
 
     def __enter__(self):
         return self
@@ -47,7 +48,7 @@ class HandleCtrlC(object):
         if etype is KeyboardInterrupt:
             self.ctrlc_hit = True
             self.__handler()
-            return True
+            return self.consume
 
 
 class MotionBar(tqdm.tqdm):

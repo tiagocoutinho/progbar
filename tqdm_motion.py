@@ -4,7 +4,12 @@
 
 import sys
 import time
-import contextlib
+
+try:
+    import contextlib
+    ExitStack = contextlib.ExitStack
+except AttributeError:
+    from contextlib2 import ExitStack
 
 import tqdm
 
@@ -101,15 +106,19 @@ class MotionBar(tqdm.tqdm):
         return u'{0:.3f}{1}'.format(pos, self.__unit)
 
 
-def motionmanager(*pbars, **kwargs):
-    ctrlc_handler = kwargs.get('ctrlc_handler')
-    if ctrlc_handler is None:
-        def ctrlc_handler():
-            for pbar in pbars:
-                pbar.axis.stop()
-    handler = HandleCtrlC(ctrlc_handler)
-    managers = list(pbars) + [handler]
-    return contextlib.nested(*managers)
+class MotionManager(ExitStack):
+
+    def __init__(self, *pbars, **kwargs):
+        super(MotionManager, self).__init__()
+        for pbar in pbars:
+            self.enter_context(pbar)
+        ctrlc_handler = kwargs.get('ctrlc_handler')
+        if ctrlc_handler is None:
+            def ctrlc_handler():
+                for pbar in pbars:
+                    pbar.axis.stop()
+        self.ctrlc_handler = HandleCtrlC(ctrlc_handler)
+        self.enter_context(self.ctrlc_handler)
 
 
 def move_simple(axis, position):
@@ -140,7 +149,7 @@ def move(*args, **kwargs):
              for i, (m, p, l) in enumerate(axis_positions_labels)]
 
     try:
-        with motionmanager(*pbars) as motion_manager:
+        with MotionManager(*pbars) as motion_manager:
             for axis, position, _ in axis_positions_labels:
                 axis.start_move(position)
             motion = True
@@ -156,7 +165,7 @@ def move(*args, **kwargs):
         if nb_lines > 0:
             fobj.write(nb_lines*'\n')
 
-    if motion_manager[-1].ctrlc_hit:
+    if motion_manager.ctrlc_handler.ctrlc_hit:
         print 'Motion aborted!'
     else:
         print 'Everything was fine!'

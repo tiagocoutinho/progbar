@@ -131,10 +131,13 @@ def move(*args, **kwargs):
     """
     fobj = kwargs.setdefault('file', sys.stderr)
     axes, positions = args[::2], args[1::2]
-    axis_positions = zip(axes, positions)
+    label_len = max(map(len,(axis.name for axis in axes)))
+    label_template = '{{0:>{0}}}'.format(label_len)
+    labels = [label_template.format(axis.name) for axis in axes]
+    axis_positions_labels = zip(axes, positions, labels)
 
-    pbars = [MotionBar(m, p, position=i)
-             for i, (m, p) in enumerate(axis_positions)]
+    pbars = [MotionBar(m, p, label=l, position=i)
+             for i, (m, p, l) in enumerate(axis_positions_labels)]
 
     try:
         with motionmanager(*pbars) as motion_manager:

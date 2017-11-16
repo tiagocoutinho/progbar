@@ -1,4 +1,4 @@
 Hello
 =====
 
-[toto](toot.rst)
+[toto](toto.rst)
